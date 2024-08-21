@@ -4,10 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -24,10 +26,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.text.style.TextAlign
+import com.josepaternina.idnotas.GlobalStateTonal.numActual
+import com.josepaternina.idnotas.GlobalStateTonal.tonalidadActual
 
 // Tonalidades ("C", "D", "E", "F", "G", "A", "B")
 val tonalidades = listOf("C", "D", "G")
 val num = listOf(1, 2, 3, 4, 5, 6)
+
+val allNotas = listOf(
+    listOf("C", "Dm", "Em", "F", "G", "Am"),
+    listOf("D", "Em", "F#m", "G", "A", "Bm"),
+    listOf("G", "Am", "Bm", "C", "D", "Em")
+)
+
+// Puntuación
+var puntos by mutableIntStateOf(0)
+var errores by mutableIntStateOf(0)
+
+// Nota seleccionada
+var notaSelect: String by mutableStateOf("")
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,25 +58,49 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp() {
     // UI
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(1.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween
+
+        ) {
+            Text(text = "Aciertos: $puntos", fontSize = 16.sp)
+            Text(text = "Errores: $errores", fontSize = 16.sp)
+        }
+
         Text(
-            text = "Tonalidad: ${GlobalStateTonal.tonalidadActual}",
-            fontSize = 22.sp
-        )
-        Text(
-            text = "# ${GlobalStateTonal.numActual}",
-            fontSize = 20.sp
+            text = "Nota seleccionada: $notaSelect",
+            fontSize = 16.sp,
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
-        NoteButtonsRow()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(1.dp),
+            verticalArrangement = Arrangement.SpaceAround,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(text = "Tonalidad: $tonalidadActual", fontSize = 22.sp)
+                Text(text = "# $numActual", fontSize = 20.sp)
+
+                Spacer(modifier = Modifier.height(16.dp))
+                NoteButtonsRow()
+
+            }
+            Footer()
+        }
     }
+
 }
 
 // Singleton object que almacena la tonalidad actual
@@ -87,12 +128,28 @@ fun NoteButtonsRow() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Puntuación
+        fun puntuacion() {
+            allNotas.forEach { nota ->
+                if (nota[0] == tonalidadActual) {
+                    if (notaSelect == nota[numActual - 1]) {
+                        puntos += 1
+                    } else {
+                        errores += 1
+                    }
+                }
+            }
+            // Llamar a cambiar tonalidad
+            GlobalStateTonal.cambiarTonalidad()
+        }
+
         //Notas Mayores
         Row {
             notasMayores.forEach { nota ->
                 Button(
                     onClick = {
-                        GlobalStateTonal.cambiarTonalidad()
+                        notaSelect = nota
+                        puntuacion()
                     },
                     modifier = Modifier
                         .width(54.dp) // Establece el ancho del botón
@@ -101,7 +158,7 @@ fun NoteButtonsRow() {
                 ) {
                     Text(
                         text = nota,
-                        fontSize = 14.sp,
+                        fontSize = 18.sp,
                         textAlign = TextAlign.Center // Centra el texto horizontalmente
                     )
                 }
@@ -113,7 +170,8 @@ fun NoteButtonsRow() {
             notasMenores.forEach { nota ->
                 FilledTonalButton(
                     onClick = {
-                        GlobalStateTonal.cambiarTonalidad()
+                        notaSelect = nota
+                        puntuacion()
                     },
                     modifier = Modifier
                         .width(56.dp) // Establece el ancho del botón
@@ -122,7 +180,7 @@ fun NoteButtonsRow() {
                 ) {
                     Text(
                         text = nota,
-                        fontSize = 10.sp,
+                        fontSize = 11.sp,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -136,13 +194,14 @@ fun NoteButtonsRow() {
             notasMenoresSos.forEach { nota ->
                 OutlinedButton(
                     onClick = {
-                        GlobalStateTonal.cambiarTonalidad()
+                        notaSelect = nota
+                        puntuacion()
                     },
                     modifier = Modifier.padding(horizontal = 1.dp)
                 ) {
                     Text(
                         text = nota,
-                        fontSize = 12.sp, // Tamaño del texto
+                        fontSize = 13.sp, // Tamaño del texto
                         textAlign = TextAlign.Center
                     )
                 }
@@ -152,6 +211,23 @@ fun NoteButtonsRow() {
 
 }
 
+// Footer
+@Composable
+fun Footer() {
+    Box(
+        modifier = Modifier
+            .padding(2.dp)
+    ) {
+        Text(
+            text = "Desarrollador: José Paternina",
+            fontSize = 12.sp,
+            modifier = Modifier
+                .align(Alignment.BottomCenter) // Alinea el texto en la parte inferior central
+        )
+    }
+}
+
+// Preview
 @Preview(showSystemUi = true)
 @Composable
 fun Preview() {
