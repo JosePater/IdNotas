@@ -1,6 +1,7 @@
 package com.josepaternina.idnotas
 
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Arrangement
@@ -25,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import com.josepaternina.idnotas.GlobalStateTonal.numActual
 import com.josepaternina.idnotas.GlobalStateTonal.tonalidadActual
@@ -93,7 +95,7 @@ fun MyApp() {
                 Text(text = "Tonalidad: $tonalidadActual", fontSize = 22.sp)
                 Text(text = "# $numActual", fontSize = 20.sp)
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(64.dp))
                 NoteButtonsRow()
 
             }
@@ -123,6 +125,7 @@ fun NoteButtonsRow() {
     val notasMayores = arrayListOf("C", "D", "E", "F", "G", "A", "B")
     val notasMenores = arrayListOf("Cm", "Dm", "Em", "Fm", "Gm", "Am", "Bm")
     val notasMenoresSos = arrayListOf("C#m", "D#m", "F#m", "G#m", "A#m")
+    val context = LocalContext.current
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -134,8 +137,15 @@ fun NoteButtonsRow() {
                 if (nota[0] == tonalidadActual) {
                     if (notaSelect == nota[numActual - 1]) {
                         puntos += 1
+                        Toast.makeText(context, "✅ OK", Toast.LENGTH_SHORT).show()
                     } else {
                         errores += 1
+
+                        Toast.makeText(
+                            context,
+                            "❌ \n$tonalidadActual$numActual: ${nota[numActual - 1]}",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
