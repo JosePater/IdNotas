@@ -28,10 +28,14 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Blue
+import androidx.compose.ui.graphics.Color.Companion.DarkGray
+import androidx.compose.ui.graphics.Color.Companion.Gray
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import com.josepaternina.idnotas.GlobalStateTonal.numActual
 import com.josepaternina.idnotas.GlobalStateTonal.tonalidadActual
 
@@ -98,10 +102,8 @@ fun MyApp() {
             ) {
                 Text(text = "Tonalidad: $tonalidadActual", fontSize = 22.sp)
                 Text(text = "# $numActual", fontSize = 20.sp)
-
                 Spacer(modifier = Modifier.height(64.dp))
-                NoteButtonsRow()
-
+                BotonesDeNotas()
             }
             Footer()
         }
@@ -122,124 +124,86 @@ object GlobalStateTonal {
     }
 }
 
-// Botones
-@Composable
-fun NoteButtonsRow() {
-    // Define el array de nombres de botones
-    val notasMayores = arrayListOf("C", "D", "E", "F", "G", "A", "B")
-    val notasMenores = arrayListOf("Cm", "Dm", "Em", "Fm", "Gm", "Am", "Bm")
-    val notasMenoresSos = arrayListOf("C#m", "D#m", "F#m", "G#m", "A#m")
-    val context = LocalContext.current
 
+// Botones de las notas mayores, menores y sostenidas
+@Composable
+fun BotonesDeNotas() {
+    // Notas de todos los botones
+    val notesForButtons = arrayListOf(
+        arrayListOf("C", "D", "E", "F", "G", "A", "B"),
+        arrayListOf("Cm", "Dm", "Em", "Fm", "Gm", "Am", "Bm"),
+        arrayListOf("C#m", "D#m", "F#m", "G#m", "A#m")
+    )
+    val context = LocalContext.current
+    var bgColor: Color // Color de fondo de los botones
+    var sizeText: TextUnit // Tamaño del texto de los botones
+
+
+    // Puntuación
+    fun puntuacion() {
+        allNotas.forEach { nota ->
+            if (nota[0] == tonalidadActual) {
+                if (notaSelect == nota[numActual - 1]) {
+                    puntos += 1
+                    Toast.makeText(context, "✅ OK", Toast.LENGTH_SHORT).show()
+                } else {
+                    errores += 1
+                    Toast.makeText(
+                        context,
+                        "❌ \n$tonalidadActual$numActual: ${nota[numActual - 1]}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }
+        // Llamar a cambiar tonalidad
+        GlobalStateTonal.cambiarTonalidad()
+    }
+
+    //Notas
     Column(
         verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Puntuación
-        fun puntuacion() {
-            allNotas.forEach { nota ->
-                if (nota[0] == tonalidadActual) {
-                    if (notaSelect == nota[numActual - 1]) {
-                        puntos += 1
-                        Toast.makeText(context, "✅ OK", Toast.LENGTH_SHORT).show()
+        notesForButtons.forEach { notas ->
+            Row {
+                notas.forEach { nota ->
+                    //
+                    if (notas[0] == "C") {
+                        bgColor = Blue
+                        sizeText = 18.sp
+                    } else if (notas[0] == "Cm") {
+                        bgColor = DarkGray
+                        sizeText = 16.sp
                     } else {
-                        errores += 1
-
-                        Toast.makeText(
-                            context,
-                            "❌ \n$tonalidadActual$numActual: ${nota[numActual - 1]}",
-                            Toast.LENGTH_SHORT
-                        ).show()
+                        bgColor = Gray
+                        sizeText = 13.sp
                     }
-                }
-            }
-            // Llamar a cambiar tonalidad
-            GlobalStateTonal.cambiarTonalidad()
-        }
 
-        //Notas Mayores
-        Row {
-            notasMayores.forEach { nota ->
-                TextButton(
-                    onClick = {
-                        notaSelect = nota
-                        puntuacion()
-                    }, modifier = Modifier
-                        .width(56.dp) // Establece el ancho del botón
-                        .height(56.dp) // Establece la altura del botón
-                        .padding(2.dp) // Aplica el margen interno del botón
-                        .clip(CircleShape)
-                        .background(Color.Blue)
-                ) {
-                    Text(
-                        text = nota,
-                        fontSize = 18.sp,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(
-                            fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold
+                    TextButton(
+                        onClick = {
+                            notaSelect = nota
+                            puntuacion()
+                        }, modifier = Modifier
+                            .width(56.dp) // Establece el ancho del botón
+                            .height(56.dp) // Establece la altura del botón
+                            .padding(2.dp) // Aplica el margen interno del botón
+                            .clip(CircleShape) // Aplica círculo
+                            .background(bgColor)
+                    ) {
+                        Text(
+                            text = nota,
+                            fontSize = sizeText,
+                            textAlign = TextAlign.Center,
+                            style = TextStyle(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
                         )
-                    )
-                }
-            }
-        }
-
-        //Notas menores
-        Row {
-            notasMenores.forEach { nota ->
-                TextButton(
-                    onClick = {
-                        notaSelect = nota
-                        puntuacion()
-                    }, modifier = Modifier
-                        .width(56.dp) // Establece el ancho del botón
-                        .height(56.dp) // Establece la altura del botón
-                        .padding(2.dp) // Aplica el margen interno del botón
-                        .clip(CircleShape) // Círculo
-                        .background(Color.Magenta)
-                ) {
-                    Text(
-                        text = nota,
-                        fontSize = 16.sp,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(
-                            fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-            }
-        }
-
-        // Notas menores #
-        Row(
-            horizontalArrangement = Arrangement.Center // Espacia uniformemente los botones
-        ) {
-            notasMenoresSos.forEach { nota ->
-                TextButton(
-                    onClick = {
-                        notaSelect = nota
-                        puntuacion()
-                    },
-                    //modifier = Modifier.padding(horizontal = 1.dp)
-                    modifier = Modifier
-                        .width(56.dp) // Establece el ancho del botón
-                        .height(56.dp) // Establece la altura del botón
-                        .padding(2.dp) // Aplica el margen interno del botón
-                        .clip(CircleShape) // Círculo
-                        .background(Color.Gray)
-
-                ) {
-                    Text(
-                        text = nota,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center,
-                        style = TextStyle(
-                            fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold
-                        )
-                    )
+                    }
                 }
             }
         }
     }
-
 }
 
 // Footer
