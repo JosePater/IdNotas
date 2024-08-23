@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,10 +15,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Button
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
@@ -26,7 +26,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.josepaternina.idnotas.GlobalStateTonal.numActual
 import com.josepaternina.idnotas.GlobalStateTonal.tonalidadActual
@@ -128,8 +132,7 @@ fun NoteButtonsRow() {
     val context = LocalContext.current
 
     Column(
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Puntuación
         fun puntuacion() {
@@ -156,20 +159,24 @@ fun NoteButtonsRow() {
         //Notas Mayores
         Row {
             notasMayores.forEach { nota ->
-                Button(
+                TextButton(
                     onClick = {
                         notaSelect = nota
                         puntuacion()
-                    },
-                    modifier = Modifier
-                        .width(54.dp) // Establece el ancho del botón
-                        .height(54.dp) // Establece la altura del botón
+                    }, modifier = Modifier
+                        .width(56.dp) // Establece el ancho del botón
+                        .height(56.dp) // Establece la altura del botón
                         .padding(2.dp) // Aplica el margen interno del botón
+                        .clip(CircleShape)
+                        .background(Color.Blue)
                 ) {
                     Text(
                         text = nota,
                         fontSize = 18.sp,
-                        textAlign = TextAlign.Center // Centra el texto horizontalmente
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(
+                            fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold
+                        )
                     )
                 }
             }
@@ -178,20 +185,24 @@ fun NoteButtonsRow() {
         //Notas menores
         Row {
             notasMenores.forEach { nota ->
-                FilledTonalButton(
+                TextButton(
                     onClick = {
                         notaSelect = nota
                         puntuacion()
-                    },
-                    modifier = Modifier
+                    }, modifier = Modifier
                         .width(56.dp) // Establece el ancho del botón
                         .height(56.dp) // Establece la altura del botón
                         .padding(2.dp) // Aplica el margen interno del botón
+                        .clip(CircleShape) // Círculo
+                        .background(Color.Magenta)
                 ) {
                     Text(
                         text = nota,
-                        fontSize = 11.sp,
-                        textAlign = TextAlign.Center
+                        fontSize = 16.sp,
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(
+                            fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold
+                        )
                     )
                 }
             }
@@ -202,17 +213,27 @@ fun NoteButtonsRow() {
             horizontalArrangement = Arrangement.Center // Espacia uniformemente los botones
         ) {
             notasMenoresSos.forEach { nota ->
-                OutlinedButton(
+                TextButton(
                     onClick = {
                         notaSelect = nota
                         puntuacion()
                     },
-                    modifier = Modifier.padding(horizontal = 1.dp)
+                    //modifier = Modifier.padding(horizontal = 1.dp)
+                    modifier = Modifier
+                        .width(56.dp) // Establece el ancho del botón
+                        .height(56.dp) // Establece la altura del botón
+                        .padding(2.dp) // Aplica el margen interno del botón
+                        .clip(CircleShape) // Círculo
+                        .background(Color.Gray)
+
                 ) {
                     Text(
                         text = nota,
-                        fontSize = 13.sp, // Tamaño del texto
-                        textAlign = TextAlign.Center
+                        fontSize = 13.sp,
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(
+                            fontSize = 14.sp, color = Color.White, fontWeight = FontWeight.Bold
+                        )
                     )
                 }
             }
@@ -225,14 +246,12 @@ fun NoteButtonsRow() {
 @Composable
 fun Footer() {
     Box(
-        modifier = Modifier
-            .padding(2.dp)
+        modifier = Modifier.padding(2.dp)
     ) {
         Text(
             text = "Desarrollador: José Paternina",
             fontSize = 12.sp,
-            modifier = Modifier
-                .align(Alignment.BottomCenter) // Alinea el texto en la parte inferior central
+            modifier = Modifier.align(Alignment.BottomCenter) // Alinea el texto en la parte inferior central
         )
     }
 }
