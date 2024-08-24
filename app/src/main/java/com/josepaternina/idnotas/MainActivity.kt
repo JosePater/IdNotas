@@ -2,9 +2,9 @@ package com.josepaternina.idnotas
 
 import android.media.MediaPlayer
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -32,13 +33,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Blue
 import androidx.compose.ui.graphics.Color.Companion.DarkGray
 import androidx.compose.ui.graphics.Color.Companion.Gray
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import com.josepaternina.idnotas.GlobalStateTonal.numActual
 import com.josepaternina.idnotas.GlobalStateTonal.tonalidadActual
+import kotlinx.coroutines.delay
 
 // 1era de las tonalidades ("C", "D", "E", "F", "G", "A", "B")
 val tonalidades = listOf("C", "D", "G")
@@ -54,6 +58,7 @@ val allNotas = listOf(
 // Puntuación
 var puntos by mutableIntStateOf(0)
 var errores by mutableIntStateOf(0)
+var showImage: String by mutableStateOf("") // Imagen temporal: OK o error
 
 // Nota seleccionada
 var notaSelect: String by mutableStateOf("")
@@ -80,9 +85,11 @@ fun MyContent() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(2.dp), contentAlignment = Alignment.Center
-
+            .padding(2.dp), contentAlignment = Alignment.TopCenter
     ) {
+        // Imagen temporal: OK o error
+        TimedImage()
+
         Column(
             Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -166,17 +173,13 @@ fun BotonesDeNotas() {
                     mediaPlayer = MediaPlayer.create(context, R.raw.correct_choice)
                     mediaPlayer.start() // Reproducir sonido
                     puntos += 1
-                    Toast.makeText(context, "✅ OK", Toast.LENGTH_SHORT).show()
+                    showImage = "ok"
                 } else {
                     // Sonido: incorrecto
                     mediaPlayer = MediaPlayer.create(context, R.raw.wrong_answer)
                     mediaPlayer.start() // Reproducir sonido
                     errores += 1
-                    Toast.makeText(
-                        context,
-                        "❌ \n$tonalidadActual$numActual: ${nota[numActual - 1]}",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showImage = "error"
                 }
                 // Liberar recursos después de que termine el sonido
                 mediaPlayer.setOnCompletionListener { mp ->
@@ -229,6 +232,32 @@ fun BotonesDeNotas() {
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun TimedImage() {
+    val myImagen: Painter
+
+    // Si no se ha iniciado no se muestra ninguna imagen: OK o error
+    if (notaSelect != "") {
+        myImagen = if (showImage == "ok") {
+            painterResource(id = R.drawable.ok) // img Ok
+        } else {
+            painterResource(id = R.drawable.error) // img error
+        }
+
+        if (showImage != "") {
+            Image(
+                painter = myImagen, contentDescription = "Respuesta", Modifier.size(50.dp)
+            )
+
+            //Delay
+            LaunchedEffect(Unit) {
+                delay(200) // Espera 200 ms
+                showImage = ""
             }
         }
     }
