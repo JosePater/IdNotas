@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,9 +31,11 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Color.Companion.Blue
+import androidx.compose.ui.graphics.Color.Companion.Black
 import androidx.compose.ui.graphics.Color.Companion.DarkGray
 import androidx.compose.ui.graphics.Color.Companion.Gray
+import androidx.compose.ui.graphics.Color.Companion.Green
+import androidx.compose.ui.graphics.Color.Companion.White
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -62,6 +65,7 @@ var showImage: String by mutableStateOf("") // Imagen temporal: OK o error
 
 // Nota seleccionada
 var notaSelect: String by mutableStateOf("")
+var notaCorrecta: String by mutableStateOf("")
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,13 +102,22 @@ fun MyContent() {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primary)
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.SpaceBetween
 
             ) {
-                Text(text = "Aciertos: $puntos", fontSize = 18.sp)
-                Text(text = "Errores: $errores", fontSize = 18.sp)
+                Text(
+                    text = "Aciertos: $puntos", fontSize = 18.sp, style = TextStyle(
+                        color = White, fontWeight = FontWeight.Bold
+                    )
+                )
+                Text(
+                    text = "Errores: $errores", fontSize = 18.sp, style = TextStyle(
+                        color = White, fontWeight = FontWeight.Bold
+                    )
+                )
             }
 
             Column(
@@ -162,12 +175,15 @@ fun BotonesDeNotas() {
     val context = LocalContext.current
     var mediaPlayer: MediaPlayer // Sonido: correcto o incorrecto
     var bgColor: Color // Color de fondo de los botones
+    var textColor: Color  // Color del texto de los botones
     var sizeText: TextUnit // Tamaño del texto de los botones
 
     // Puntuación
     fun puntuacion() {
         allNotas.forEach { nota ->
             if (nota[0] == tonalidadActual) {
+                notaCorrecta = nota[numActual - 1]
+
                 if (notaSelect == nota[numActual - 1]) {
                     // Sonido: correcto
                     mediaPlayer = MediaPlayer.create(context, R.raw.correct_choice)
@@ -200,7 +216,7 @@ fun BotonesDeNotas() {
                 notas.forEach { nota ->
                     // bgColor y fontSize según el tipo de notas (C, Cm, C#m)
                     if (notas[0] == "C") {
-                        bgColor = Blue
+                        bgColor = MaterialTheme.colorScheme.primary
                         sizeText = 18.sp
                     } else if (notas[0] == "Cm") {
                         bgColor = DarkGray
@@ -208,6 +224,13 @@ fun BotonesDeNotas() {
                     } else {
                         bgColor = Gray
                         sizeText = 13.sp
+                    }
+                    // Color temporal del botón de la nota correcta
+                    if (notaCorrecta == nota) {
+                        bgColor = Green
+                        textColor = Black
+                    } else {
+                        textColor = White
                     }
 
                     // Botones de las notas determinadas
@@ -227,7 +250,7 @@ fun BotonesDeNotas() {
                             fontSize = sizeText,
                             textAlign = TextAlign.Center,
                             style = TextStyle(
-                                color = Color.White, fontWeight = FontWeight.Bold
+                                color = textColor, fontWeight = FontWeight.Bold
                             )
                         )
                     }
@@ -251,13 +274,17 @@ fun TimedImage() {
 
         if (showImage != "") {
             Image(
-                painter = myImagen, contentDescription = "Respuesta", Modifier.size(50.dp)
+                painter = myImagen, contentDescription = "Respuesta",
+                Modifier
+                    .size(100.dp)
+                    .padding(top = 45.dp)
             )
 
             //Delay
             LaunchedEffect(Unit) {
                 delay(200) // Espera 200 ms
-                showImage = ""
+                showImage = "" // Para que se quite la imagen
+                notaCorrecta = "" // Para que se quite el color temporal del botón
             }
         }
     }
