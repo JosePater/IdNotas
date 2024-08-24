@@ -1,5 +1,6 @@
 package com.josepaternina.idnotas
 
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -79,8 +80,7 @@ fun MyContent() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(2.dp),
-        contentAlignment = Alignment.Center
+            .padding(2.dp), contentAlignment = Alignment.Center
 
     ) {
         Column(
@@ -101,8 +101,7 @@ fun MyContent() {
             }
 
             Column(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.SpaceAround,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -154,24 +153,34 @@ fun BotonesDeNotas() {
         arrayListOf("C#m", "D#m", "F#m", "G#m", "A#m")
     )
     val context = LocalContext.current
+    var mediaPlayer: MediaPlayer // Sonido: correcto o incorrecto
     var bgColor: Color // Color de fondo de los botones
     var sizeText: TextUnit // Tamaño del texto de los botones
-
 
     // Puntuación
     fun puntuacion() {
         allNotas.forEach { nota ->
             if (nota[0] == tonalidadActual) {
                 if (notaSelect == nota[numActual - 1]) {
+                    // Sonido: correcto
+                    mediaPlayer = MediaPlayer.create(context, R.raw.correct_choice)
+                    mediaPlayer.start() // Reproducir sonido
                     puntos += 1
                     Toast.makeText(context, "✅ OK", Toast.LENGTH_SHORT).show()
                 } else {
+                    // Sonido: incorrecto
+                    mediaPlayer = MediaPlayer.create(context, R.raw.wrong_answer)
+                    mediaPlayer.start() // Reproducir sonido
                     errores += 1
                     Toast.makeText(
                         context,
                         "❌ \n$tonalidadActual$numActual: ${nota[numActual - 1]}",
                         Toast.LENGTH_SHORT
                     ).show()
+                }
+                // Liberar recursos después de que termine el sonido
+                mediaPlayer.setOnCompletionListener { mp ->
+                    mp.release()
                 }
             }
         }
@@ -215,8 +224,7 @@ fun BotonesDeNotas() {
                             fontSize = sizeText,
                             textAlign = TextAlign.Center,
                             style = TextStyle(
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                color = Color.White, fontWeight = FontWeight.Bold
                             )
                         )
                     }
