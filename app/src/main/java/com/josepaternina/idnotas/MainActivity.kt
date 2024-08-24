@@ -39,10 +39,11 @@ import androidx.compose.ui.unit.TextUnit
 import com.josepaternina.idnotas.GlobalStateTonal.numActual
 import com.josepaternina.idnotas.GlobalStateTonal.tonalidadActual
 
-// Tonalidades ("C", "D", "E", "F", "G", "A", "B")
+// 1era de las tonalidades ("C", "D", "E", "F", "G", "A", "B")
 val tonalidades = listOf("C", "D", "G")
 val num = listOf(1, 2, 3, 4, 5, 6)
 
+// Tonalidades de C, D y G
 val allNotas = listOf(
     listOf("C", "Dm", "Em", "F", "G", "Am"),
     listOf("D", "Em", "F#m", "G", "A", "Bm"),
@@ -60,50 +61,68 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MyApp()
+            MyContent()
         }
     }
 }
 
 @Composable
-fun MyApp() {
+fun MyContent() {
+    // Texto descriptivo
+    val textDescrip = if (notaSelect != "") {
+        "Nota seleccionada: $notaSelect"
+    } else {
+        "Seleccione la nota correspondiente!"
+    }
+
     // UI
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceBetween
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(2.dp),
+        contentAlignment = Alignment.Center
 
-        ) {
-            Text(text = "Aciertos: $puntos", fontSize = 16.sp)
-            Text(text = "Errores: $errores", fontSize = 16.sp)
-        }
-
-        Text(
-            text = "Nota seleccionada: $notaSelect",
-            fontSize = 16.sp,
-            modifier = Modifier
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp),
-        )
-
+    ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(1.dp),
-            verticalArrangement = Arrangement.SpaceAround,
-            horizontalAlignment = Alignment.CenterHorizontally
+            Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.Top,
+                horizontalArrangement = Arrangement.SpaceBetween
+
+            ) {
+                Text(text = "Aciertos: $puntos", fontSize = 18.sp)
+                Text(text = "Errores: $errores", fontSize = 18.sp)
+            }
+
             Column(
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.SpaceAround,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(text = "Tonalidad: $tonalidadActual", fontSize = 22.sp)
-                Text(text = "# $numActual", fontSize = 20.sp)
-                Spacer(modifier = Modifier.height(64.dp))
-                BotonesDeNotas()
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = "Tonalidad: $tonalidadActual", fontSize = 22.sp)
+                    Text(text = "# $numActual", fontSize = 20.sp)
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = textDescrip,
+                        fontSize = 16.sp,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(bottom = 16.dp),
+                    )
+                    BotonesDeNotas()
+                }
             }
             Footer()
         }
@@ -167,7 +186,7 @@ fun BotonesDeNotas() {
         notesForButtons.forEach { notas ->
             Row {
                 notas.forEach { nota ->
-                    //
+                    // bgColor y fontSize según el tipo de notas (C, Cm, C#m)
                     if (notas[0] == "C") {
                         bgColor = Blue
                         sizeText = 18.sp
@@ -179,6 +198,7 @@ fun BotonesDeNotas() {
                         sizeText = 13.sp
                     }
 
+                    // Botones de las notas determinadas
                     TextButton(
                         onClick = {
                             notaSelect = nota
@@ -188,7 +208,7 @@ fun BotonesDeNotas() {
                             .height(56.dp) // Establece la altura del botón
                             .padding(2.dp) // Aplica el margen interno del botón
                             .clip(CircleShape) // Aplica círculo
-                            .background(bgColor)
+                            .background(bgColor) // Color del círculo
                     ) {
                         Text(
                             text = nota,
@@ -214,7 +234,7 @@ fun Footer() {
     ) {
         Text(
             text = "Desarrollador: José Paternina",
-            fontSize = 12.sp,
+            fontSize = 13.sp,
             modifier = Modifier.align(Alignment.BottomCenter) // Alinea el texto en la parte inferior central
         )
     }
@@ -224,5 +244,5 @@ fun Footer() {
 @Preview(showSystemUi = true)
 @Composable
 fun Preview() {
-    MyApp()
+    MyContent()
 }
