@@ -2,6 +2,7 @@ package com.josepaternina.idnotas
 
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -48,14 +50,18 @@ import com.josepaternina.idnotas.GlobalStateTonal.tonalidadActual
 import kotlinx.coroutines.delay
 
 // 1era de las tonalidades ("C", "D", "E", "F", "G", "A", "B")
-val tonalidades = listOf("C", "D", "G")
+val tonalidades = listOf("C", "D", "E", "F", "G", "A", "B")
 val num = listOf(1, 2, 3, 4, 5, 6)
 
 // Tonalidades de C, D y G
 val allNotas = listOf(
     listOf("C", "Dm", "Em", "F", "G", "Am"),
     listOf("D", "Em", "F#m", "G", "A", "Bm"),
-    listOf("G", "Am", "Bm", "C", "D", "Em")
+    listOf("E", "F#m", "G#m", "A", "B", "C#m"),
+    listOf("F", "Gm", "Am", "Bb", "C", "Dm"),
+    listOf("G", "Am", "Bm", "C", "D", "Em"),
+    listOf("A", "Bm", "C#m", "D", "E", "F#m"),
+    listOf("B", "C#m", "D#m", "E", "F#", "G#m")
 )
 
 // Puntuación
@@ -66,6 +72,9 @@ var showImage: String by mutableStateOf("") // Imagen temporal: OK o error
 // Nota seleccionada
 var notaSelect: String by mutableStateOf("")
 var notaCorrecta: String by mutableStateOf("")
+
+//CheckBox                                                      C     D     E      F      G     A      B
+val isCheckedNota = mutableStateListOf(true, false, false, false, false, false, false)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,6 +129,9 @@ fun MyContent() {
                 )
             }
 
+            // Notas seleccionadas
+            CheckBoxAction()
+
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.SpaceAround,
@@ -152,12 +164,13 @@ fun MyContent() {
 // Singleton object que almacena la tonalidad actual
 object GlobalStateTonal {
     // variable global reactiva
-    var tonalidadActual by mutableStateOf(tonalidades.random())
+    var tonalidadActual by mutableStateOf(tonalidades.filterIndexed { index, _ -> isCheckedNota[index] }
+        .random())
     var numActual by mutableIntStateOf(num.random())
 
     // Función para cambiar la tonalidad aleatoriamente
     fun cambiarTonalidad() {
-        tonalidadActual = tonalidades.random()
+        tonalidadActual = tonalidades.filterIndexed { index, _ -> isCheckedNota[index] }.random()
         numActual = num.random()
     }
 }
@@ -170,7 +183,7 @@ fun BotonesDeNotas() {
     val notesForButtons = arrayListOf(
         arrayListOf("C", "D", "E", "F", "G", "A", "B"),
         arrayListOf("Cm", "Dm", "Em", "Fm", "Gm", "Am", "Bm"),
-        arrayListOf("C#m", "D#m", "F#m", "G#m", "A#m")
+        arrayListOf("C#m", "D#m", "F#m", "G#m", "A#m", "F#", "Bb")
     )
     val context = LocalContext.current
     var mediaPlayer: MediaPlayer // Sonido: correcto o incorrecto
@@ -178,33 +191,41 @@ fun BotonesDeNotas() {
     var textColor: Color  // Color del texto de los botones
     var sizeText: TextUnit // Tamaño del texto de los botones
 
+
     // Puntuación
     fun puntuacion() {
-        allNotas.forEach { nota ->
-            if (nota[0] == tonalidadActual) {
-                notaCorrecta = nota[numActual - 1]
+        // Si hay alguna tonalidad para practicar seleccionada
+        if (isCheckedNota.any { it }) {
+            allNotas.forEach { nota ->
+                if (nota[0] == tonalidadActual) {
+                    notaCorrecta = nota[numActual - 1]
 
-                if (notaSelect == nota[numActual - 1]) {
-                    // Sonido: correcto
-                    mediaPlayer = MediaPlayer.create(context, R.raw.correct_choice)
-                    mediaPlayer.start() // Reproducir sonido
-                    puntos += 1
-                    showImage = "ok"
-                } else {
-                    // Sonido: incorrecto
-                    mediaPlayer = MediaPlayer.create(context, R.raw.wrong_answer)
-                    mediaPlayer.start() // Reproducir sonido
-                    errores += 1
-                    showImage = "error"
-                }
-                // Liberar recursos después de que termine el sonido
-                mediaPlayer.setOnCompletionListener { mp ->
-                    mp.release()
+                    if (notaSelect == nota[numActual - 1]) {
+                        // Sonido: correcto
+                        mediaPlayer = MediaPlayer.create(context, R.raw.correct_choice)
+                        mediaPlayer.start() // Reproducir sonido
+                        puntos += 1
+                        showImage = "ok"
+                    } else {
+                        // Sonido: incorrecto
+                        mediaPlayer = MediaPlayer.create(context, R.raw.wrong_answer)
+                        mediaPlayer.start() // Reproducir sonido
+                        errores += 1
+                        showImage = "error"
+                    }
+                    // Liberar recursos después de que termine el sonido
+                    mediaPlayer.setOnCompletionListener { mp ->
+                        mp.release()
+                    }
                 }
             }
+
+            // Llamar a cambiar tonalidad
+            GlobalStateTonal.cambiarTonalidad()
+        } else {
+            Toast.makeText(context, "Seleccione una tonalidad", Toast.LENGTH_SHORT).show()
         }
-        // Llamar a cambiar tonalidad
-        GlobalStateTonal.cambiarTonalidad()
+
     }
 
     //Notas
@@ -285,6 +306,40 @@ fun TimedImage() {
                 delay(200) // Espera 200 ms
                 showImage = "" // Para que se quite la imagen
                 notaCorrecta = "" // Para que se quite el color temporal del botón
+            }
+        }
+    }
+}
+
+@Composable
+fun CheckBoxAction() {
+    // Tonalidades para practicar
+    Column(
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Tonalidades para practicar:",
+            fontSize = 20.sp
+        )
+
+        Row {
+            for (index in isCheckedNota.indices) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(0.dp)
+                ) {
+                    Checkbox(
+                        checked = isCheckedNota[index],
+                        onCheckedChange = { isCheckedNota[index] = it }
+                    )
+
+                    Text(
+                        text = tonalidades[index], fontSize = 20.sp,
+                        modifier = Modifier.padding(0.dp)
+                    )
+                }
             }
         }
     }
