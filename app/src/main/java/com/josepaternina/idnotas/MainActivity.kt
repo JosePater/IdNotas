@@ -1,5 +1,6 @@
 package com.josepaternina.idnotas
 
+import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
 import android.media.MediaPlayer
 import android.os.Bundle
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -78,6 +80,7 @@ var notaCorrecta: String by mutableStateOf("")
 val isCheckedNota = mutableStateListOf(true, false, false, false, false, false, false)
 
 class MainActivity : ComponentActivity() {
+    @SuppressLint("SourceLockedOrientationActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Fijar la orientación en vertical
@@ -97,51 +100,42 @@ fun MyContent() {
         "Seleccione la nota correspondiente!"
     }
 
+    // Imagen temporal: OK o error
+    TimedImage()
+
     // UI
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(2.dp), contentAlignment = Alignment.TopCenter
+            .padding(2.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Imagen temporal: OK o error
-        TimedImage()
+        // Encabezado: Aciertos y errores
+        Header()
 
         Column(
-            Modifier.fillMaxSize(),
+            Modifier
+                .fillMaxWidth()
+                .weight(1f), // Ocupa el espacio disponible
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.Top
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.SpaceBetween
 
-            ) {
-                Text(
-                    text = "Aciertos: $puntos", fontSize = 18.sp, style = TextStyle(
-                        color = White, fontWeight = FontWeight.Bold
-                    )
-                )
-                Text(
-                    text = "Errores: $errores", fontSize = 18.sp, style = TextStyle(
-                        color = White, fontWeight = FontWeight.Bold
-                    )
-                )
-            }
-
-            // Notas seleccionadas
-            CheckBoxAction()
+            // Temporizador
+            CountdownTimer(totalTimeInSeconds = 120) // 2 minutos
 
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.SpaceAround,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.1f), // Ocupa el espacio disponible,
+                verticalArrangement = Arrangement.SpaceEvenly,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Notas seleccionadas
+                CheckBoxAction()
                 Column(
-                    verticalArrangement = Arrangement.Center,
+                    //verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(text = "Tonalidad: $tonalidadActual", fontSize = 22.sp)
@@ -158,8 +152,8 @@ fun MyContent() {
                     BotonesDeNotas()
                 }
             }
-            Footer()
         }
+        Footer()
     }
 
 }
@@ -287,7 +281,6 @@ fun BotonesDeNotas() {
 @Composable
 fun TimedImage() {
     val myImagen: Painter
-
     // Si no se ha iniciado no se muestra ninguna imagen: OK o error
     if (notaSelect != "") {
         myImagen = if (showImage == "ok") {
@@ -297,16 +290,23 @@ fun TimedImage() {
         }
 
         if (showImage != "") {
-            Image(
-                painter = myImagen, contentDescription = "Respuesta",
-                Modifier
-                    .size(100.dp)
-                    .padding(top = 45.dp)
-            )
+            Column(
+                Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    painter = myImagen, contentDescription = "Respuesta",
+                    Modifier
+                        .size(180.dp)
+                        .padding(top = 100.dp),
+                    Alignment.Center
+                )
+            }
 
             //Delay
             LaunchedEffect(Unit) {
-                delay(200) // Espera 200 ms
+                delay(400) // Espera 400 ms
                 showImage = "" // Para que se quite la imagen
                 notaCorrecta = "" // Para que se quite el color temporal del botón
             }
@@ -335,7 +335,12 @@ fun CheckBoxAction() {
                 ) {
                     Checkbox(
                         checked = isCheckedNota[index],
-                        onCheckedChange = { isCheckedNota[index] = it }
+                        onCheckedChange = { it ->
+                            isCheckedNota[index] = it
+                            // Si al menos está seleccionada una tonalidad, se puede cambiar
+                            if (isCheckedNota.any { it }) GlobalStateTonal.cambiarTonalidad()
+                            notaSelect = "" // Resetea la nota oprimida
+                        }
                     )
 
                     Text(
@@ -345,6 +350,31 @@ fun CheckBoxAction() {
                 }
             }
         }
+    }
+}
+
+// Header
+@Composable
+fun Header() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primary)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.SpaceBetween
+
+    ) {
+        Text(
+            text = "Aciertos: $puntos", fontSize = 18.sp, style = TextStyle(
+                color = White, fontWeight = FontWeight.Bold
+            )
+        )
+        Text(
+            text = "Errores: $errores", fontSize = 18.sp, style = TextStyle(
+                color = White, fontWeight = FontWeight.Bold
+            )
+        )
     }
 }
 
@@ -358,6 +388,40 @@ fun Footer() {
             text = "Desarrollador: José Paternina",
             fontSize = 13.sp,
             modifier = Modifier.align(Alignment.BottomCenter) // Alinea el texto en la parte inferior central
+        )
+    }
+}
+
+@Composable
+fun CountdownTimer(totalTimeInSeconds: Int) {
+    var timeLeft by remember { mutableIntStateOf(totalTimeInSeconds) }
+    var progress by remember { mutableFloatStateOf(1f) }
+
+    LaunchedEffect(key1 = timeLeft) {
+        if (timeLeft > 0) {
+            delay(1000L) // Espera 1 segundo
+            timeLeft--
+            progress = timeLeft / totalTimeInSeconds.toFloat()
+        }
+    }
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "Tiempo restante: $timeLeft ${if (timeLeft > 1) "segundos" else "segundo"}",
+            fontSize = 18.sp
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        LinearProgressIndicator(
+            progress = progress,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 32.dp)
         )
     }
 }
