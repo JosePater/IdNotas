@@ -1,5 +1,6 @@
 package com.josepaternina.idnotas
 
+import android.content.pm.ActivityInfo
 import android.media.MediaPlayer
 import android.os.Bundle
 import android.widget.Toast
@@ -79,6 +80,8 @@ val isCheckedNota = mutableStateListOf(true, false, false, false, false, false, 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Fijar la orientación en vertical
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         setContent {
             MyContent()
         }
