@@ -21,13 +21,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,6 +51,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import com.josepaternina.idnotas.GlobalStateTonal.numActual
@@ -78,6 +84,8 @@ var notaCorrecta: String by mutableStateOf("")
 
 //CheckBox                                                      C     D     E      F      G     A      B
 val isCheckedNota = mutableStateListOf(true, false, false, false, false, false, false)
+var practiceTime by mutableIntStateOf(0) // Tiempo de conteo regresivo
+var showDialogResult by mutableStateOf(false) // Muestra los resultados (aciertos y fallos)
 
 class MainActivity : ComponentActivity() {
     @SuppressLint("SourceLockedOrientationActivity")
@@ -93,6 +101,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MyContent() {
+    var showDialogInsertTime by remember { mutableStateOf(false) } // Para
+
     // Texto descriptivo
     val textDescrip = if (notaSelect != "") {
         "Nota seleccionada: $notaSelect"
@@ -102,6 +112,20 @@ fun MyContent() {
 
     // Imagen temporal: OK o error
     TimedImage()
+
+    // Diálogo de resultados
+    if (showDialogResult) {
+        DialogResult(
+            title = "Resultados de la práctica",
+            message = "Cantidad de aciertos: $puntos \n" +
+                    "Cantidad de errores: $errores \n" +
+                    "Tiempo: $practiceTime segundos",
+            onConfirm = {
+                showDialogResult = false // Ocultar visualización de resultados
+                practiceTime = 0 // Temporizador en cero
+            }
+        )
+    }
 
     // UI
     Column(
@@ -123,7 +147,31 @@ fun MyContent() {
         ) {
 
             // Temporizador
-            CountdownTimer(totalTimeInSeconds = 120) // 2 minutos
+            if (practiceTime > 0) {
+                CountdownTimer(practiceTime) // Temporizador
+            } else {
+                // Botón de nuevo reto
+                Button(onClick = {
+                    showDialogInsertTime = true
+                }) {
+                    Text(text = "JUGAR", fontSize = 20.sp)
+                }
+            }
+
+            // Diálogo para insertar el tiempo
+            if (showDialogInsertTime) {
+                DialogInsertTime(
+                    title = "Tiempo de práctica",
+                    message = "Por favor, ingrese el tiempo:",
+                    onDismiss = { showDialogInsertTime = false },
+                    onConfirm = { input ->
+                        showDialogInsertTime = false
+                        practiceTime = input.toInt()
+                        puntos = 0
+                        errores = 0
+                    }
+                )
+            }
 
             Column(
                 modifier = Modifier
@@ -254,8 +302,16 @@ fun BotonesDeNotas() {
                     // Botones de las notas determinadas
                     TextButton(
                         onClick = {
-                            notaSelect = nota
-                            puntuacion()
+                            if (practiceTime > 0) {
+                                notaSelect = nota
+                                puntuacion()
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Presione 'JUGAR' para ingresar el tiempo",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }, modifier = Modifier
                             .width(56.dp) // Establece el ancho del botón
                             .height(56.dp) // Establece la altura del botón
@@ -306,7 +362,7 @@ fun TimedImage() {
 
             //Delay
             LaunchedEffect(Unit) {
-                delay(400) // Espera 400 ms
+                delay(500) // Espera 500 ms
                 showImage = "" // Para que se quite la imagen
                 notaCorrecta = "" // Para que se quite el color temporal del botón
             }
@@ -378,20 +434,63 @@ fun Header() {
     }
 }
 
-// Footer
+// Dialogo de ingreso del tiempo temporizador
 @Composable
-fun Footer() {
-    Box(
-        modifier = Modifier.padding(2.dp)
-    ) {
-        Text(
-            text = "Desarrollador: José Paternina",
-            fontSize = 13.sp,
-            modifier = Modifier.align(Alignment.BottomCenter) // Alinea el texto en la parte inferior central
-        )
-    }
+fun DialogInsertTime(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit,
+    onConfirm: (String) -> Unit
+) {
+    var entrada by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = title)
+        },
+        text = {
+            Column {
+                Text(text = message, fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+                TextField(
+                    value = entrada,
+                    onValueChange = { entrada = it },
+                    label = { Text("Ingrese el tiempo en segundos") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number) // Teclado numérico
+
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    // Si la entrada se puede convertir a número y está dentro del rango
+                    if (entrada.toIntOrNull() != null && entrada.toInt() in 10..300) {
+                        onConfirm(entrada)
+                    } else {
+                        Toast.makeText(
+                            context, "Ingrese un número válido \n" +
+                                    "(De 10 a 300 segundos)", Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            ) {
+                Text("Aceptar")
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = { onDismiss() }
+            ) {
+                Text("Cancelar")
+            }
+        }
+    )
 }
 
+// Temporizador
 @Composable
 fun CountdownTimer(totalTimeInSeconds: Int) {
     var timeLeft by remember { mutableIntStateOf(totalTimeInSeconds) }
@@ -403,6 +502,11 @@ fun CountdownTimer(totalTimeInSeconds: Int) {
             timeLeft--
             progress = timeLeft / totalTimeInSeconds.toFloat()
         }
+    }
+
+    // Cuando se termine el tiempo del temporizador
+    if (timeLeft == 0) {
+        showDialogResult = true // Muestra el diálogo de resultados
     }
 
     Column(
@@ -422,6 +526,48 @@ fun CountdownTimer(totalTimeInSeconds: Int) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 32.dp)
+        )
+    }
+}
+
+// Muestra de resultados
+@Composable
+fun DialogResult(
+    title: String,
+    message: String,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = {
+            Text(text = title)
+        },
+        text = {
+            Column {
+                Text(text = message, fontSize = 18.sp)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm() }
+            ) {
+                Text("OK")
+            }
+        }
+    )
+}
+
+// Footer
+@Composable
+fun Footer() {
+    Box(
+        modifier = Modifier.padding(2.dp)
+    ) {
+        Text(
+            text = "Desarrollador: José Paternina",
+            fontSize = 13.sp,
+            modifier = Modifier.align(Alignment.BottomCenter) // Alinea el texto en la parte inferior central
         )
     }
 }
