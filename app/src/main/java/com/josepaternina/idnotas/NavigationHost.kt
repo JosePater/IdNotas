@@ -22,7 +22,7 @@ fun NavigationHost(navController: NavHostController) {
 
         // Pantalla2
         composable(Pantalla2.ruta) {
-            Tonalidad()
+            SelectTonalidad()
         }
 
         // Pantalla2
